@@ -1,7 +1,6 @@
 function [Y_hat, mainloss_history] = solver_2fac_CPD(Y, R, Y_hat, rho, mu, maxoutiters, maxiters, min_rho_stable)
-    % maxoutiters = 100
-    % rho = 1e1
-    % maxiters = 10
+
+    % Misc. and size computations
     modes = ndims(Y);
     szY = size(Y); 
 
@@ -12,6 +11,7 @@ function [Y_hat, mainloss_history] = solver_2fac_CPD(Y, R, Y_hat, rho, mu, maxou
     counter = 0;
     flag = 0;
 
+    % Main Loop
     for kiter = 1:maxoutiters
         for n = 1:modes-1
             m = n + 1; % can change the mode m 

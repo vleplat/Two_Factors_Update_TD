@@ -3,7 +3,6 @@ function [U, loss_history, primal_residual_history, T, rho] = linreg_pkrp(Ymn, U
     %   solve min||Y-Phi*Z^T||^2_f  
     %   s.t. Z= X 
 
-    % szY(1) = [I1 I2 R]
     R = length(L);
     Q = inv(Phi' * Phi + (rho + mu) * eye(R));
     B = Ymn' * Phi;
@@ -33,25 +32,12 @@ function [U, loss_history, primal_residual_history, T, rho] = linreg_pkrp(Ymn, U
         % Update X
        
         D = Z - T;
-        F1 = zeros(szXnm(1), R);
-        % D = reshape(Z - T, [szXnm(2), szXnm(1), szXnm(3)]);
-        F2 = zeros(szXnm(2), R); 
-        S = zeros(R, 1);
         for r = 1:R
-            % [u, s, v] = svds(D(:, :, r)', 1);
             Hr = reshape(D(:,r), szXnm(1), szXnm(2));
             [u, s, v] = svds(Hr, L(r));
-            % F1(:, r) = u;
-            % F2(:, r) = v';
-            % S(r) = s;
-            % prod = u*s*v';
-            % X(:,r) = prod(:);
             U{r}{1} = u*s;
             U{r}{2} = v;
-            % U{r}{4} = s;
         end
-        
-        % X = kr(F2, F1 * diag(S)); % Replace with your kr function
         X = pw_vecL(U,R,L);
 
         % Compute the primal residual

@@ -1,7 +1,4 @@
 function [Y_hat, U, mainloss_history, U0] = solver_2fac_ll1(Y, L, U, rho, mu, maxoutiters, maxiters, min_rho_stable, init_type, varargin)
-    % maxoutiters = 100
-    % rho = 1e1
-    % maxiters = 10
 
     % STEP0: Check input parameters and misc.
     min_rho_stable = 0.1;
@@ -69,12 +66,12 @@ function [Y_hat, U, mainloss_history, U0] = solver_2fac_ll1(Y, L, U, rho, mu, ma
     idx=1:3;
     mode = 3;
     Y_3 = tens2mat(Y,mode,idx(idx~=mode));
-    % (frob(btdres(Y,U))/frob(Y))^2
     C = zeros(szY(3),R);
     for r=1:R
         C(:,r) = U{r}{3};
     end
 
+    % Main Loop
     for kiter = 1:maxoutiters
 
         % Update of A=[A_1,...,A_R] and B=[B_1,...,B_R]
