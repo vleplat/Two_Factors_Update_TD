@@ -24,7 +24,7 @@ The baseline algorithms used in the manuscript are courtesy of their respective 
  
  - /Libraries : contains helpful libaries, such as Tensorlab (https://tensorlab.net) 
  
- - /Datasets : contains test data sets.
+ - /Datasets : contains some results presented in Section 5 of the paper.
 
  - /functions : contains helpful files, the MatLab implementations of the Algorithms developped in the paper, and MatLab routines to run the demos.
    
