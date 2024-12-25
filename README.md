@@ -4,7 +4,7 @@ A family of new algorithms to compute tensor decompositions.
 This MATLAB software reproduces the results from the following paper:
 
 ```
-@misc{2fac_updates_leplat2024,
+@misc{2fac_updates_2025,
       title={Two Factors Update for Tensor Decompositions}, 
       author={Valentin Leplat and Anastasia Sozykina and Igor Vorona and Salman Ahmadi-Asl and Anh Huy Phan},
       year={2025},
@@ -20,11 +20,11 @@ The baseline algorithms used in the manuscript are courtesy of their respective 
 
 ## Content
 
-### MatLab framework
+### MatLab framework "2_fac_updates_CPD_and_LL1"
  
  - /Libraries : contains helpful libaries, such as Tensorlab (https://tensorlab.net) 
  
- - /Datasets : contains some results presented in Section 5 of the paper.
+ - /Results : contains some results presented in Section 5 of the paper.
 
  - /functions : contains helpful files, the MatLab implementations of the Algorithms developped in the paper, and MatLab routines to run the demos.
    
