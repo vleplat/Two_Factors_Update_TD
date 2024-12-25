@@ -22,8 +22,6 @@ The baseline algorithms used in the manuscript are courtesy of their respective 
 ## Content - MatLab framework "2_fac_updates_CPD_and_LL1"
  
  - /Libraries : contains helpful libaries, such as Tensorlab (https://tensorlab.net) 
- 
- - /Results : contains some results presented in Section 5 of the paper.
 
  - /functions : contains helpful files, the MatLab implementations of the Algorithms developped in the paper, and MatLab routines to run the demos.
    
