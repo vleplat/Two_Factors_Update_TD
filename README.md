@@ -18,9 +18,7 @@ This MATLAB software reproduces the results from the following paper:
 
 The baseline algorithms used in the manuscript are courtesy of their respective authors.
 
-## Content
-
-### MatLab framework "2_fac_updates_CPD_and_LL1"
+## Content - MatLab framework "2_fac_updates_CPD_and_LL1"
  
  - /Libraries : contains helpful libaries, such as Tensorlab (https://tensorlab.net) 
  
@@ -29,7 +27,7 @@ The baseline algorithms used in the manuscript are courtesy of their respective 
  - /functions : contains helpful files, the MatLab implementations of the Algorithms developped in the paper, and MatLab routines to run the demos.
    
    
-## Test files
+### Test files
  
  Test files are available. To proceed, open and start one of the following files:
 
