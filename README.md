@@ -6,7 +6,8 @@ This MATLAB software reproduces the results from the following paper:
 ```
 @misc{2fac_updates_2025,
       title={Two Factors Update Algorithms for Tensor Decompositions}, 
-      author={Valentin Leplat and Anastasia Sozykina and Igor Vorona and Salman Ahmadi-Asl and Anh Huy Phan},
+      author={Valentin Leplat and Anastasia Sozykina and Igor Vorona and Salman Ahmadi-Asl
+      and Anh Huy Phan},
       year={2025},
       eprint={},
       archivePrefix={arXiv},
