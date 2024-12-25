@@ -23,7 +23,7 @@ function [Y_hat, U, mainloss_history, U0] = solver_2fac_ll1(Y, L, U, rho, mu, ma
         init_type = 'RAND';
     end
 
-    modes = ndims(Y);
+    % modes = ndims(Y);
     szY = size(Y); 
 
     normY = norm(reshape(Y, [], 1))^2;
@@ -31,7 +31,7 @@ function [Y_hat, U, mainloss_history, U0] = solver_2fac_ll1(Y, L, U, rho, mu, ma
 
     rho_stable = rho;
     counter = 0;
-    flag = 0;
+    % flag = 0;
     
     R = length(L);
 
@@ -48,12 +48,12 @@ function [Y_hat, U, mainloss_history, U0] = solver_2fac_ll1(Y, L, U, rho, mu, ma
     % STEP 2: initialize the factor matrices unless they were all provided by
     % the user.
     fprintf('Step 2: Initialization \n');
-    % TO Improve later
     if ~exist('U', 'var') || isempty(U)
         if strcmp(init_type,'RAND')
             fprintf('is ll1_rnd (default) \n');
             [U,~] = ll1_rnd(size_tens, L, varargin);
         elseif strcmp(init_type,'GEVD')
+            % GEVD not working in this current version - TBD
             fprintf('is ll1_gevd \n');
             [U, ~] = ll1_gevd(Y, L, varargin);
         end
@@ -61,8 +61,8 @@ function [Y_hat, U, mainloss_history, U0] = solver_2fac_ll1(Y, L, U, rho, mu, ma
         fprintf('is manual... \n');
     end
     U0 = U;
+    
     % STEP 3: 3-mode Unfolding
-
     idx=1:3;
     mode = 3;
     Y_3 = tens2mat(Y,mode,idx(idx~=mode));

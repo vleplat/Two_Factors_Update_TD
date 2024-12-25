@@ -15,13 +15,13 @@ function [X, Z, F1, F2, S, loss_history, primal_residual_history, T, rho] = linr
 
     X = X0; 
     Z = X;
-    f0 = norm(Ymn - Phi * X', 'fro')^2 / normY;
+    % f0 = norm(Ymn - Phi * X', 'fro')^2 / normY;
     loss_history = []; 
     primal_residual_history = [];
 
     % Define the parameters of the rule
-    mu = 10; % Residual ratio threshold
-    tau = 2; % Rho scaling factor
+    % mu = 10; % Residual ratio threshold
+    % tau = 2; % Rho scaling factor
 
     for kiter = 1:maxiters
         Z_old = Z;
@@ -30,7 +30,6 @@ function [X, Z, F1, F2, S, loss_history, primal_residual_history, T, rho] = linr
         Z = (B + rho * (X + T)) * Q;
 
         % Update X
-       
         D = Z - T;
         F1 = zeros(szXnm(1), R);
         F2 = zeros(szXnm(2), R); 
@@ -56,10 +55,10 @@ function [X, Z, F1, F2, S, loss_history, primal_residual_history, T, rho] = linr
         loss = norm(Ymn - Phi * Z', 'fro')^2 / normY; % f(Z) + i(X) 
 
         % dual residual
-        s = rho * (Z - Z_old);
+        % s = rho * (Z - Z_old);
         % Compute the primal and dual residual norms
         norm_r = norm(r, 'fro');
-        norm_s = norm(s, 'fro');  
+        % norm_s = norm(s, 'fro');  
 
         loss_history = [loss_history; loss];
         primal_residual_history = [primal_residual_history; norm_r / norm(Z, 'fro')];

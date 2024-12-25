@@ -20,8 +20,8 @@ function [U, loss_history, primal_residual_history, T, rho] = linreg_pkrp(Ymn, U
     primal_residual_history = [];
 
     % Define the parameters of the rule
-    mu = 10; % Residual ratio threshold
-    tau = 2; % Rho scaling factor
+    % mu = 10; % Residual ratio threshold
+    % tau = 2; % Rho scaling factor % to implement for next version
 
     for kiter = 1:maxiters
         Z_old = Z;
@@ -30,7 +30,6 @@ function [U, loss_history, primal_residual_history, T, rho] = linreg_pkrp(Ymn, U
         Z = (B + rho * (X + T)) * Q;
 
         % Update X
-       
         D = Z - T;
         for r = 1:R
             Hr = reshape(D(:,r), szXnm(1), szXnm(2));
@@ -50,10 +49,10 @@ function [U, loss_history, primal_residual_history, T, rho] = linreg_pkrp(Ymn, U
         loss = norm(Ymn - Phi * Z', 'fro')^2 / normY; % f(Z) + i(X) 
 
         % dual residual
-        s = rho * (Z - Z_old);
+        % s = rho * (Z - Z_old);
         % Compute the primal and dual residual norms
         norm_r = norm(r, 'fro');
-        norm_s = norm(s, 'fro');  
+        % norm_s = norm(s, 'fro');  
 
         loss_history = [loss_history; loss];
         primal_residual_history = [primal_residual_history; norm_r / norm(Z, 'fro')];

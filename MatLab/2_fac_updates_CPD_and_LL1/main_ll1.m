@@ -1,12 +1,11 @@
 clear all;clc;close all;
-rng(2025)
+rng(2025) % for reproducibility
 addpath(genpath(pwd))
 %% ------------------------------------------------------------------------
 % This script is the main file for comparing LL1 algorithms
 %%-------------------------------------------------------------------------
+%% Problem and tensor generation - playground
 % Follows https://tensorlab.net/doc/ll1.html
-
-%% Problem and tensor generation
 size_tens = [10 11 12]*2;
 L = [2 3 4]*2;
 U = ll1_rnd(size_tens, L);
@@ -24,24 +23,23 @@ U = ll1_rnd(size_tens, L, options);
 % are grouped.
 
 
-% To expand the factorized representation U of the decomposition in multilinear 
-% rank-(Lr,Lr,1) terms to a full tensor, ll1gen can be used:
+%% Problem and tensor generation - paper
+% For Figure 5: fac1 = 1, and fac2 = 1;
+% For Figure 6: fac1 = 5, and fac2 = 3;
+fac1 = 1; fac2=1;
 
-size_tens = [10 11 12];
-L = [2 3 4];
+size_tens = [10 11 12]*fac1;
+L = [2 3 4]*fac2;
 Ubtd = ll1_rnd(size_tens, L, 'OutputFormat', 'btd');
 T    = ll1gen(Ubtd);
-% T    = ll1gen(Ubtd, L); % L is optional for BTD format
-
-% Ucpd = ll1_rnd(size_tens, L, 'OutputFormat', 'cpd');
-% T    = ll1gen(U,L); % L is required for CPD format
-
 
 %% Computing the decomposition in multilinear rank-(Lr,Lr,1) terms
 % Our Solver
 list_2fac = [];
 nb_trials = 5;
 for trial=1:nb_trials
+    % change rho values in solver_2fac_ll1.m depending on the test: 2 (figure 5) and 10 (figure
+    % 6)
     [T_hat, Uhat_2fac, mainloss_history, U0] = solver_2fac_ll1(T, L);
     list_2fac.Uhat{trial}=Uhat_2fac;
     list_2fac.lossfun{trial}=mainloss_history;
@@ -81,16 +79,15 @@ end
 % Post-processing
 %--------------------------------------------------------------------------
 close all;
-% idx_best_2fac = 2;
 font_size = 15;
 figure;
-semilogy(1:list_tensorlab.output{idx_best_tensorlab}.Algorithm.iterations,sqrt(2*list_tensorlab.output{idx_best_tensorlab}.Algorithm.fval(2:end)),'-','LineWidth',2);
+semilogy(1:list_tensorlab.output{idx_best_tensorlab}.Algorithm.iterations,sqrt(2*list_tensorlab.output{idx_best_tensorlab}.Algorithm.fval(2:end))/frob(T),'-','LineWidth',2);
 hold on
-semilogy(1:length(list_2fac.lossfun{idx_best_2fac}),list_2fac.lossfun{idx_best_2fac}*frob(T),'-.','LineWidth',2);
+semilogy(1:length(list_2fac.lossfun{idx_best_2fac}),list_2fac.lossfun{idx_best_2fac},'-.','LineWidth',2);
 text{1} = 'll1 - tensorlab';
 text{2} = 'll1 - 2 Fac. Updates';
 xlabel('iteration - $k$','Interpreter','latex','FontSize',font_size);
-ylabel('$\| \mathcal{Y} - \sum_{r=1}^R \left(A_r B_r^T\right) \otimes c_r \|_F$',"Interpreter",'latex','FontSize',font_size);
+ylabel('$\| \mathcal{Y} - \sum_{r=1}^R \left(A_r B_r^T\right) \otimes c_r \|_F / \| \mathcal{Y} \|_F$',"Interpreter",'latex','FontSize',font_size);
 legend(text,'Location','northwest','Orientation','horizontal',"Interpreter","latex",'FontSize',font_size)
 grid on;
 
