@@ -1,5 +1,5 @@
-# Two_Factors_Update_TD
-A family of new algorithms to compute tensor decompositions.
+# Two Factors Update Algorithms for Tensor Decompositions
+A family of new algorithms to compute various tensor decompositions, including the Canonical Polyadic Decomposition (CPD), the Block-Term Decomposition (BTD) with ranks $(L_r,L_r,1)$, the Tucker Decomposition and the General BTD.
 
 This MATLAB software reproduces the results from the following paper:
 
