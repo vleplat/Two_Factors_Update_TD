@@ -138,7 +138,7 @@ loglog(dZ);
 hold off;
 xlabel('Iterations');
 ylabel('Values');
-title('Subsolver - Log-Log Plot of f and dZ ');
+title('Subsolver - squared relative fit and primal residual');
 legend('f', 'dZ');
 grid on;
 
@@ -184,8 +184,8 @@ Y_hat.weights = ones(R,1);
 
 % Call of solver
 maxoutiters = 100;
-rho = 2;
-maxiters = 20;
+rho = 100;
+maxiters = 30;
 min_rho_stable = rho;
 [Y_hat, mainloss_history] = solver_2fac_CPD(Y,R,Y_hat,rho,mu,maxoutiters,maxiters,min_rho_stable);
 
@@ -206,8 +206,8 @@ loglog(mainloss_history);
 hold on;
 xlabel('Iterations');
 ylabel('Values');
-title('Full solver - Log-Log Plot of err');
-legend('f');
+title('Full solver - relative reconstruction error');
+legend('relative reconstruction error');
 grid on;
 
 

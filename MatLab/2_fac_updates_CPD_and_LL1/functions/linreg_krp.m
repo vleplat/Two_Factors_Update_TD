@@ -1,74 +1,76 @@
 function [X, Z, F1, F2, S, loss_history, primal_residual_history, T, rho] = linreg_krp(Ymn, Phi, rho, mu, szXnm, X0, maxiters, T, verbose)
-    % ADMM
-    %   solve min||Y-Phi*Z^T||^2_f  
-    %   s.t. Z= X 
+    % ADMM for
+    %   min_Z 0.5*||Ymn - Phi*Z'||_F^2 + 0.5*mu*||Z||_F^2
+    %   subject to X = Z and X Khatri-Rao structured.
+    %
+    % rho is the augmented-Lagrangian penalty beta = 1/gamma used in the
+    % manuscript. The update order is X (nonsmooth), Z (smooth), then T.
 
-    R = szXnm(3);
-    Q = inv(Phi' * Phi + (rho + mu) * eye(R));
-    B = Ymn' * Phi;
-
+    if nargin < 9 || isempty(verbose)
+        verbose = false;
+    end
     if nargin < 8 || isempty(T)
-        T = zeros(szXnm(1) * szXnm(2), R);
+        T = zeros(szXnm(1) * szXnm(2), szXnm(3));
     end
 
-    normY = norm(Ymn, 'fro')^2;
+    R = szXnm(3);
+    gram = Phi' * Phi + (rho + mu) * eye(R);
+    data_term = Ymn' * Phi;
 
-    X = X0; 
-    Z = X;
-    % f0 = norm(Ymn - Phi * X', 'fro')^2 / normY;
-    loss_history = []; 
-    primal_residual_history = [];
+    normY2 = max(norm(Ymn, 'fro')^2, eps);
 
-    % Define the parameters of the rule
-    % mu = 10; % Residual ratio threshold
-    % tau = 2; % Rho scaling factor
+    X = X0;
+    Z = X0;
+    loss_history = zeros(maxiters, 1);
+    primal_residual_history = zeros(maxiters, 1);
+
+    F1 = zeros(szXnm(1), R);
+    F2 = zeros(szXnm(2), R);
+    S = ones(R, 1);
 
     for kiter = 1:maxiters
         Z_old = Z;
 
-        % Update Z
-        Z = (B + rho * (X + T)) * Q;
-
-        % Update X
+        % 1) Update X: exact projection onto the rank-at-most-one set.
         D = Z - T;
-        F1 = zeros(szXnm(1), R);
-        F2 = zeros(szXnm(2), R); 
-        S = zeros(R, 1);
-        
         for r = 1:R
-            Hr = reshape(D(:,r), szXnm(1), szXnm(2));
-            [u, s, v] = svds(Hr, 1);
-            F1(:, r) = u;
-            F2(:, r) = v';
-            S(r) = s;
-            prod = u*s*v';
-            X(:,r) = prod(:);
+            Hr = reshape(D(:, r), szXnm(1), szXnm(2));
+            [Ur, Sr, Vr] = svd(Hr, 'econ');
+            sigma = max(Sr(1, 1), 0);
+            root_sigma = sqrt(sigma);
+
+            % Balanced factor recovery, as stated in the revised paper.
+            F1(:, r) = root_sigma * Ur(:, 1);
+            F2(:, r) = root_sigma * Vr(:, 1);
+            X(:, r) = reshape(F1(:, r) * F2(:, r)', [], 1);
         end
-        
-        % Compute the primal residual
-        r = X - Z;
 
-        % Update T
-        T = T + r;
+        % 2) Update Z: smooth quadratic subproblem.
+        Z = (data_term + rho * (X + T)) / gram;
 
-        % Compute the objective function value
-        loss = norm(Ymn - Phi * Z', 'fro')^2 / normY; % f(Z) + i(X) 
+        % 3) Update the scaled dual variable T.
+        primal_residual = X - Z;
+        T = T + primal_residual;
 
-        % dual residual
-        % s = rho * (Z - Z_old);
-        % Compute the primal and dual residual norms
-        norm_r = norm(r, 'fro');
-        % norm_s = norm(s, 'fro');  
+        % Relative squared fitting error used by the original scripts.
+        loss = norm(Ymn - Phi * Z', 'fro')^2 / normY2;
+        dual_residual = rho * (Z - Z_old); %#ok<NASGU>
 
-        loss_history = [loss_history; loss];
-        primal_residual_history = [primal_residual_history; norm_r / norm(Z, 'fro')];
+        loss_history(kiter) = loss;
+        primal_residual_history(kiter) = ...
+            norm(primal_residual, 'fro') / max(norm(Z, 'fro'), eps);
 
         if verbose
-            fprintf('kiter %d | f = %f | d(Z,X) %f | rho %f\n', kiter, loss, primal_residual_history(end), rho);
-        end 
+            fprintf('kiter %d | f = %.6e | d(Z,X) %.6e | rho %.6e\n', ...
+                kiter, loss, primal_residual_history(kiter), rho);
+        end
 
-        if (kiter > 5) && (loss <= 1e-6) && (primal_residual_history(end) <= 1e-5)
-            break; 
-        end 
+        if (kiter > 5) && (loss <= 1e-6) && ...
+                (primal_residual_history(kiter) <= 1e-5)
+            break;
+        end
     end
+
+    loss_history = loss_history(1:kiter);
+    primal_residual_history = primal_residual_history(1:kiter);
 end

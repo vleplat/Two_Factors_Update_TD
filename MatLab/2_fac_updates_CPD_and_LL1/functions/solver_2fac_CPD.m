@@ -1,20 +1,26 @@
 function [Y_hat, mainloss_history] = solver_2fac_CPD(Y, R, Y_hat, rho, mu, maxoutiters, maxiters, min_rho_stable)
+    % Two-factor CPD solver.
+    %
+    % The inner ADMM uses the order X (nonsmooth), Z (smooth), then T.
+    % NOTE: this routine keeps the submitted numerical schedule of overlapping
+    % consecutive pairs (1,2), (2,3), ... . This differs from the random,
+    % non-overlapping pairing shown in Algorithm 2 and is left unchanged here
+    % to preserve the numerical experiment design.
 
-    % Misc. and size computations
     modes = ndims(Y);
-    szY = size(Y); 
-
-    normY = norm(reshape(Y, [], 1))^2;
-    mainloss_history = [];
+    szY = size(Y);
+    normY = max(frob(Y), eps);
+    normY2 = normY^2;
+    mainloss_history = zeros(maxoutiters * max(modes - 1, 1), 1);
+    history_idx = 0;
 
     rho_stable = rho;
     counter = 0;
     flag = 0;
 
-    % Main Loop
     for kiter = 1:maxoutiters
         for n = 1:modes-1
-            m = n + 1; % can change the mode m 
+            m = n + 1;
 
             modes_1 = sort([n, m]);
             modes_2 = sort(setdiff(1:modes, modes_1));
@@ -22,46 +28,76 @@ function [Y_hat, mainloss_history] = solver_2fac_CPD(Y, R, Y_hat, rho, mu, maxou
             sz2 = prod(szY(modes_2));
             sz1 = prod(szY(modes_1));
 
-            % unfolding mode-(n,m)    
             Y_nm = permute(Y, [modes_2, modes_1]);
             Y_nm = reshape(Y_nm, [sz2, sz1]);
 
             szXnm = [szY(modes_1(1)), szY(modes_1(2)), R];
 
-            % initialize X0
             U_in = Y_hat.factors{modes_1(1)};
             V_in = Y_hat.factors{modes_1(2)};
-            X0 = kr(V_in, U_in * diag(Y_hat.weights)); % Replace with your kr function
+            X0 = kr(V_in, U_in * diag(Y_hat.weights));
 
-            % Compute Phi
             Factorx2 = Y_hat.factors(modes_2(end:-1:1));
-            Phi = kr(Factorx2); % Replace with your kr function
+            Phi = kr(Factorx2);
 
-            % solve sub-problem
-            fcurr = norm(Y_nm - Phi * X0', 'fro')^2 / normY;
+            fcurr = norm(Y_nm - Phi * X0', 'fro')^2 / normY2;
 
-            while true
-                [X, Z, Unew, Vnew, Snew, loss_history, dZ, T, rhonew] = linreg_krp(Y_nm, Phi, rho, mu, szXnm, X0, maxiters, [], false);
+            best_fit = inf;
+            accepted = false;
+            max_retries = 20;
+            for retry = 1:max_retries
+                [~, ~, Unew, Vnew, Snew, loss_history, dZ, T, ~] = ...
+                    linreg_krp(Y_nm, Phi, rho, mu, szXnm, X0, ...
+                    maxiters, [], false); %#ok<ASGLU>
 
-                if loss_history(end) > fcurr * 10
-                    % fail case
-                    rho = rho * 1.1;
-                else
+                X_candidate = kr(Vnew, Unew * diag(Snew));
+                fit_candidate = norm(Y_nm - Phi * X_candidate', 'fro')^2 / normY2;
+
+                if fit_candidate < best_fit
+                    best_fit = fit_candidate;
+                    best_Unew = Unew;
+                    best_Vnew = Vnew;
+                    best_Snew = Snew;
+                    best_loss_history = loss_history;
+                    best_dZ = dZ;
+                end
+
+                if fit_candidate <= max(10 * fcurr, fcurr + 1e-14)
+                    accepted = true;
                     break;
                 end
+                rho = 1.1 * rho;
             end
 
-            % Update factors in Y_hat
+            if ~accepted
+                warning('solver_2fac_CPD:RetryLimit', ...
+                    ['The pair update did not pass the acceptance test after %d retries. ' ...
+                     'The best trial is retained.'], max_retries);
+                Unew = best_Unew;
+                Vnew = best_Vnew;
+                Snew = best_Snew;
+                loss_history = best_loss_history;
+                dZ = best_dZ;
+            end
+
             Y_hat.factors{modes_1(1)} = Unew;
             Y_hat.factors{modes_1(2)} = Vnew;
-            Y_hat.weights = Snew;                
+            Y_hat.weights = Snew;
 
-            fprintf('kiter %2.2f | f = %2.4e | d(Z,X) %2.4e | rho % .4e\n', kiter, loss_history(end), dZ(end), rho_stable);
+            % Record the actual relative CP reconstruction error associated
+            % with the structured factors X, rather than the auxiliary Z-fit.
+            factors_eval = Y_hat.factors;
+            factors_eval{1} = factors_eval{1} * diag(Y_hat.weights);
+            current_relerr = frob(Y - cpdgen(factors_eval)) / normY;
 
-            mainloss_history = [mainloss_history; loss_history(end)];
+            history_idx = history_idx + 1;
+            mainloss_history(history_idx) = current_relerr;
 
-            % If the loss function value is smaller than the previous 10 values, increment the counter by one and set the flag to True
-            if (length(mainloss_history) > 5) && (kiter > 1) && (loss_history(end) <= min(mainloss_history(end-5:end)))
+            fprintf('kiter %d | pair (%d,%d) | relerr = %.6e | d(Z,X) %.6e | rho %.6e\n', ...
+                kiter, n, m, current_relerr, dZ(end), rho);
+
+            if (history_idx > 5) && ...
+                    (current_relerr <= min(mainloss_history(history_idx-5:history_idx-1)))
                 counter = counter + 1;
                 flag = 1;
             else
@@ -69,31 +105,31 @@ function [Y_hat, mainloss_history] = solver_2fac_CPD(Y, R, Y_hat, rho, mu, maxou
                 flag = 0;
             end
 
-            % If the counter reaches 10 and the error is smaller than 1e-6, reduce rho by a factor of 0.9 or 0.95, and reset the counter to zero
             if (counter == 2) && (dZ(end) < 1e-6)
-                rho = rho * 0.95;
+                rho = 0.95 * rho;
                 counter = 0;
             end
 
-            % If the loss function value is larger than the previous value, reduce the counter by one
-            if (length(mainloss_history) > 2) && (kiter > 1) && (loss_history(end) > mainloss_history(end-1))
+            if (history_idx > 1) && ...
+                    (current_relerr > mainloss_history(history_idx-1))
                 counter = counter - 1;
             end
 
-            % If the counter is negative, increase rho by a small amount (e.g., 0.1) until it reaches rho_stable, and reset the counter to zero
             if counter < 0
                 rho = min(rho + 0.1, rho_stable);
                 counter = 0;
             end
 
-            % Update rho_stable to be the minimum of rho and rho_stable only when the flag is True
             if flag == 1
                 rho_stable = max(min_rho_stable, min(rho, rho_stable));
             end
         end
 
-        if (kiter > 5) && (mainloss_history(end) <= 1e-6) && (dZ(end) <= 1e-4)
+        if (kiter > 5) && (mainloss_history(history_idx) <= 1e-6) && ...
+                (dZ(end) <= 1e-4)
             break;
         end
     end
+
+    mainloss_history = mainloss_history(1:history_idx);
 end
