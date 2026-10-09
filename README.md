@@ -8,7 +8,7 @@ This repository contains the MATLAB implementation of the two-factor update algo
 The main idea is to update two factor matrices simultaneously instead of updating the factors one by one. The repository currently includes implementations and numerical tests for:
 
 - the Canonical Polyadic Decomposition (CPD);
-- the Block-Term Decomposition (BTD) with ranks \((L_r,L_r,1)\).
+- the Block-Term Decomposition (BTD) with ranks $(L_r,L_r,1)$.
 
 The paper also discusses extensions of this idea to the Tucker decomposition and the general Block-Term Decomposition.
 
@@ -75,18 +75,21 @@ where:
 
 ## Citation
 
-The paper is currently under review. Please use the following temporary citation:
+If you use this code in your research, please cite our published paper:
 
 ```bibtex
-@unpublished{leplat_two_factors_update,
-  title  = {Two Factors Update Algorithms for Tensor Decompositions},
-  author = {Leplat, Valentin and Sozykina, Anastasia and Vorona, Igor
-            and Ahmadi-Asl, Salman and Phan, Anh-Huy},
-  note   = {Under review}
+@article{Leplat2026TwoFactors,
+  title   = {Two factors update algorithms for tensor decompositions},
+  author  = {Leplat, Valentin and Sozykina, Anastasia and Vorona, Igor
+             and Ahmadi-Asl, Salman and Phan, Anh-Huy},
+  journal = {Optimization Methods and Software},
+  pages   = {1--26},
+  year    = {2026},
+  publisher = {Taylor \& Francis},
+  doi     = {10.1080/10556788.2026.2725036},
+  url     = {https://doi.org/10.1080/10556788.2026.2725036}
 }
 ```
-
-The bibliographic information will be updated after publication.
 
 ## Acknowledgements
 
